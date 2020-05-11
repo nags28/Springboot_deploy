@@ -1,22 +1,63 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
+# Maven package Java project Web App to Linux on Azure
+# Build your Java project and deploy it to Azure as a Linux web app
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
+variables:
 
-steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.8'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: '0d4dbb6e-69a9-41b8-aa99-986b94e0a7d7'
+  
+  # Web app name
+  webAppName: 'java-spring-boot'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: MavenPackageAndPublishArtifacts
+    displayName: Maven Package and Publish Artifacts
+    pool:
+      vmImage: $(vmImageName)
+    
+    steps:
+    - task: Maven@3
+      displayName: 'Maven Package'
+      inputs:
+        mavenPomFile: 'pom.xml'
+
+    - task: CopyFiles@2
+      displayName: 'Copy Files to artifact staging directory'
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)'
+        Contents: '**/target/*.?(war|jar)'
+        TargetFolder: $(Build.ArtifactStagingDirectory)
+
+    - task: PublishPipelineArtifact@0
+      displayName: 'Publish pipeline artifacts'
+      inputs:
+        targetPath: $(Build.ArtifactStagingDirectory)
+
+- stage: deploy
+  displayName: Deploy stage
+  dependsOn: build
+  condition: succeeded()
+  jobs:
+  - deployment: VMDeploy
+    displayName: web
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    environment:
+      name: deployment
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: sudo nohup java -jar $(Pipeline.Workspace)/petclinic123/*.jar &
