@@ -79,3 +79,15 @@ stages:
         deploy:
           steps:
           - script: sudo nohup java -jar  $(Pipeline.Workspace)/drop/target/*.jar &
+- stage: Testing
+  displayName: Test Stage
+  dependsOn: deploy
+  condition: succeeded()
+  jobs:
+  - job: ExecuteJavaCode 
+    pool:
+      vmImage: 'Ubuntu-16.04'  
+    steps:
+    - script: |
+         javac JavaTest.java
+         java JavaTest       
