@@ -44,6 +44,24 @@ stages:
       inputs:
         targetPath: $(Build.ArtifactStagingDirectory)
 
+- stage: IAC
+  displayName: Instance Creation
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: InsatnceCreation
+    displayName: IAC
+    pool:
+      name: nags
+    steps:
+    - script: |
+       pwd
+       cd infra
+       ls
+       terraform init
+       terraform plan
+       terraform apply -auto-approve
+
 - stage: deploy
   displayName: Deploy stage
   dependsOn: build
