@@ -60,4 +60,4 @@ stages:
       runOnce:
         deploy:
           steps:
-          - script: sudo nohup java -jar  $(Pipeline.Workspace)/drop/*.jar &
+          - script: sudo nohup java -jar  $(Pipeline.Workspace)/drop/target/*.jar &
