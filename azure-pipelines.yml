@@ -91,3 +91,21 @@ stages:
     - script: |
          javac JavaTest.java
          java JavaTest       
+
+- stage: production
+  displayName: prod stage
+  dependsOn: Testing
+  condition: succeeded()
+  jobs:
+  - deployment: VMDeploy
+    displayName: web
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    environment:
+      name: production
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: sudo nohup java -jar  $(Pipeline.Workspace)/drop/target/*.jar &
