@@ -1,6 +1,6 @@
 terraform {
   backend "azurerm" {
-    resource_group_name   = "demo"
+    resource_group_name   = "nags"
     storage_account_name  = "nagsdiag"
     container_name        = "tstate"
     key                   = "terraform.tfstate"
